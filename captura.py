@@ -1,6 +1,9 @@
 import cv2
 import os
+import numpy as np
 
+# Criar reconhecedor facial LBPH
+lbph = cv2.face.LBPHFaceRecognizer_create()
 # Função para criar a pasta "fotos" se ela não existir
 def criar_pasta_fotos():
     if not os.path.exists("fotos"):
@@ -8,6 +11,9 @@ def criar_pasta_fotos():
 
 # Cria a pasta "fotos"
 criar_pasta_fotos()
+
+# Carrega o classificador dos olhos 
+classificadorOlho = cv2.CascadeClassifier("haarcascade_eye.xml")
 
 # Carrega o classificador de faces
 classificador = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
@@ -38,14 +44,31 @@ while True:
     # Para cada face detectada, desenha um retângulo ao redor dela
     for (x, y, l, a) in facesDetectadas:
         cv2.rectangle(imagem, (x, y), (x + l, y + a), (0, 0, 255), 2)
-        
-        # Captura a imagem da face detectada e salva quando a tecla 'q' é pressionada
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            if amostra <= numeroAmostras:
-                imagemFace = cv2.resize(imagemCinza[y:y + a, x:x + l], (largura, altura))
-                cv2.imwrite(f"fotos/pessoa.{id}.{amostra}.jpg", imagemFace)
-                print(f"[foto {amostra} capturada com sucesso]")
-                amostra += 1
+
+        # indentifica se existe olhos na captura 
+        regiao = imagem[y:y + a, x:x + l]
+
+        # Converste a imagem dos olhos para uma escala de cinza 
+        regiaoCinzaOlho = cv2.cvtColor(regiao, cv2.COLOR_BGR2GRAY)
+        # Detecta Olhos na imagem 
+
+        olhosDetectados = classificadorOlho.detectMultiScale(regiaoCinzaOlho)
+
+        # para cada olho detectado, desenha um retângulo ao redor dele 
+        for (ox, oy, ol, oa) in olhosDetectados:
+            cv2.rectangle(regiao, (ox, oy), (ox + ol , oy + oa), (0 , 255 , 0), 2 )
+
+
+
+
+            # Captura a imagem da face detectada e salva quando a tecla 'q' é pressionada
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                if np.average(imagemCinza) > 110: 
+                    if amostra <= numeroAmostras:
+                        imagemFace = cv2.resize(imagemCinza[y:y + a, x:x + l], (largura, altura))
+                        cv2.imwrite(f"fotos/pessoa.{id}.{amostra}.jpg", imagemFace)
+                        print(f"[foto {amostra} capturada com sucesso]")
+                        amostra += 1
     
     # Mostra a imagem com as detecções
     cv2.imshow("Face", imagem)
