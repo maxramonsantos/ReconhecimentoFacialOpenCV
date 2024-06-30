@@ -2,6 +2,19 @@ import cv2
 import face_recognition
 import pickle
 import  os
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+from firebase_admin import storage
+
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred,{
+    'databaseURL': "https://sitemadereconhecimentfacial-default-rtdb.firebaseio.com/",
+    'storageBucket': "sitemadereconhecimentfacial.appspot.com"
+})
+
+
+
 
 #importando as fotos dos estudante
 folderPath = 'Images'
@@ -16,6 +29,13 @@ for path in pathList:
     #divide o codigo em duas partes removendo o .png do codigo do aluno
     studentIds.append(os.path.splitext(path)[0])
     #print(path)
+
+    fileName = f'{folderPath}/{path}'
+    bucket = storage.bucket()
+    blob = bucket.blob(fileName)
+    blob.upload_from_filename(fileName)
+
+
 
 print(studentIds)
 
